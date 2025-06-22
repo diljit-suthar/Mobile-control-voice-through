@@ -1,8 +1,9 @@
+// settings.gradle (Groovy DSL)
 pluginManagement {
     repositories {
-        gradlePluginPortal()
         google()
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 
