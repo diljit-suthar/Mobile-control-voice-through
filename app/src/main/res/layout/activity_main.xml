@@ -5,17 +5,17 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <Button
-        android:id="@+id/btn_voice"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Start Voice" />
-
     <TextView
         android:id="@+id/txt_result"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Your voice command will appear here"
-        android:textSize="18sp"
-        android:paddingTop="16dp" />
+        android:text="Voice command results will appear here"
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/btn_voice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Voice Recognition"/>
+        
 </LinearLayout>
