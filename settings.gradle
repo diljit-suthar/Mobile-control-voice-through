@@ -1,19 +1,8 @@
-// settings.gradle (Groovy DSL)
+// settings.gradle
+
 pluginManagement {
     repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
+        google()      // Add Google repository
+        mavenCentral() // Add Maven Central repository
     }
 }
-
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-rootProject.name = "MasterApp"
-include ':app'
