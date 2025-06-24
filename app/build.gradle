@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.master.app'
     compileSdkVersion 33
+    buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "com.master.app"
@@ -10,6 +10,7 @@ android {
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -18,11 +19,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+}
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
+repositories {
+    google()
+    mavenCentral()
 }
 
 dependencies {
