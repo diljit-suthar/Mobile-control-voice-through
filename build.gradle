@@ -1,19 +1,9 @@
-pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://jitpack.io' }
+buildscript {
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.0.2'
     }
 }
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://jitpack.io' }
-    }
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
-
-rootProject.name = "Mobile-control-voice-through"
-include ':app'
