@@ -2,19 +2,21 @@
 
 buildscript {
     repositories {
-        mavenCentral()  // Only use Maven Central for build script dependencies
+        google()      // Google repository for Android tools
+        mavenCentral() // Maven Central for dependencies
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.0'  // Android Gradle Plugin
+        classpath 'com.android.tools.build:gradle:7.2.0'  // Android Gradle Plugin version
     }
 }
 
 allprojects {
     repositories {
-        mavenCentral() // Use Maven Central for all projects
+        google()      // Google repository for project dependencies
+        mavenCentral() // Maven Central for all projects
     }
 }
 
 task clean(type: Delete) {
-    delete rootProject.buildDir // Clean task to delete build directory
+    delete rootProject.buildDir // Clean task
 }
