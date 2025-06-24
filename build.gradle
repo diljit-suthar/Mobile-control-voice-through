@@ -1,22 +1,21 @@
-// build.gradle (Root Level)
-
 buildscript {
     repositories {
-        google()      // Google repository for Android tools
-        mavenCentral() // Maven Central for dependencies
+        google()
+        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.0'  // Android Gradle Plugin version
+        classpath 'com.android.tools.build:gradle:7.2.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
     }
 }
 
 allprojects {
     repositories {
-        google()      // Google repository for project dependencies
-        mavenCentral() // Maven Central for all projects
+        google()
+        mavenCentral()
     }
 }
 
 task clean(type: Delete) {
-    delete rootProject.buildDir // Clean task
+    delete rootProject.buildDir
 }
