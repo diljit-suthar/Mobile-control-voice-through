@@ -1,6 +1,11 @@
-// Top-level build file (no repositories block)
+// Top-level build file
 
 buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
     dependencies {
         classpath 'com.android.tools.build:gradle:8.0.2'
     }
