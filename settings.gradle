@@ -1,11 +1,9 @@
-// settings.gradle
-
-rootProject.name = 'Mobile-control-voice-through'
-include ':app'
-
 pluginManagement {
     repositories {
         google()
         mavenCentral()
     }
 }
+
+rootProject.name = 'Mobile-control-voice-through'
+include ':app'
