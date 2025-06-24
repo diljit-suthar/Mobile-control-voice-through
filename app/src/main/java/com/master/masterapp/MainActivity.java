@@ -2,8 +2,9 @@ package com.master.app;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.pm.PackageManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.widget.Button;
@@ -15,7 +16,6 @@ import org.vosk.Recognizer;
 import org.vosk.android.SpeechService;
 import org.vosk.android.RecognitionListener;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Locale;
 
 public class MainActivity extends Activity implements RecognitionListener {
