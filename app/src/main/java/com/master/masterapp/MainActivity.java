@@ -29,10 +29,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        resultTextView = findViewById(R.id.txt_result); // match your XML
+        resultTextView = findViewById(R.id.result_text_view);
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
+        // Request microphone permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.RECORD_AUDIO},
                     PERMISSIONS_REQUEST_RECORD_AUDIO);
@@ -42,26 +42,25 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO &&
                 grantResults.length > 0 &&
                 grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             initModel();
         } else {
-            finish();
+            resultTextView.setText("Permission denied.");
         }
     }
 
     private void initModel() {
         new Thread(() -> {
             try {
-                model = new Model(getAssets(), "model");
+                model = new Model("model"); // Load from assets/model/
                 Recognizer recognizer = new Recognizer(model, 16000.0f);
                 speechService = new SpeechService(recognizer, 16000.0f);
                 speechService.startListening(this);
             } catch (IOException e) {
-                runOnUiThread(() -> resultTextView.setText("Error loading model: " + e.getMessage()));
+                runOnUiThread(() -> resultTextView.setText("Model error: " + e.getMessage()));
                 e.printStackTrace();
             }
         }).start();
@@ -69,18 +68,18 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onPartialResult(String hypothesis) {
-        runOnUiThread(() -> resultTextView.setText(hypothesis));
+        runOnUiThread(() -> resultTextView.setText("Partial: " + hypothesis));
     }
 
     @Override
     public void onResult(String hypothesis) {
-        runOnUiThread(() -> resultTextView.setText(hypothesis));
+        runOnUiThread(() -> resultTextView.setText("Result: " + hypothesis));
     }
 
     @Override
     public void onFinalResult(String hypothesis) {
         runOnUiThread(() -> {
-            resultTextView.setText(hypothesis);
+            resultTextView.setText("Final: " + hypothesis);
             processCommand(hypothesis);
         });
     }
@@ -92,15 +91,15 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onTimeout() {
-        runOnUiThread(() -> resultTextView.setText("Timeout reached."));
+        runOnUiThread(() -> resultTextView.setText("Listening timed out."));
     }
 
     private void processCommand(String command) {
         command = command.toLowerCase();
         if (command.contains("otg on")) {
-            // Your OTG on logic
+            // TODO: Add OTG enabling logic
         } else if (command.contains("call my father")) {
-            // Call logic
+            // TODO: Add call logic
         }
     }
 
