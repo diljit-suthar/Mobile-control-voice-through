@@ -1,8 +1,10 @@
+// Top-level build file
+
 buildscript {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://alphacephei.com/maven/' }
+        maven { url 'https://alphacephei.com/maven' } // Required for Vosk
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.0.2'
@@ -13,6 +15,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://alphacephei.com/maven/' } 
+        maven { url 'https://alphacephei.com/maven' } // Required for Vosk
     }
 }
