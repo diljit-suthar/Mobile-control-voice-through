@@ -1,13 +1,21 @@
-package com.master.app;
+package com.master.masterapp;
 
 import android.Manifest;
-import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -15,81 +23,154 @@ import org.vosk.Model;
 import org.vosk.Recognizer;
 import org.vosk.android.RecognitionListener;
 import org.vosk.android.SpeechService;
+import org.vosk.android.SpeechStreamService;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Locale;
 
-public class MainActivity extends Activity implements RecognitionListener {
+public class MainActivity extends AppCompatActivity implements RecognitionListener {
 
-    private TextView txtResult;
+    private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
+    private static final String TAG = "MasterApp";
+
     private SpeechService speechService;
+    private TextToSpeech tts;
+    private TextView resultTextView;
+    private Model model;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        resultTextView = findViewById(R.id.result_text_view);
 
-        txtResult = findViewById(R.id.txt_result);
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
-                != PackageManager.PERMISSION_GRANTED) {
-
+        // Request permissions
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CALL_PHONE},
-                    1);
+                    new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
+        } else {
+            initModelAndRecognizer();
         }
 
-        try {
-            Model model = new Model(getAssets(), "model");
-            Recognizer recognizer = new Recognizer(model, 16000.0f);
-            speechService = new SpeechService(recognizer, 16000.0f);
-            speechService.startListening(this);
-        } catch (IOException e) {
-            txtResult.setText("Error loading model: " + e.getMessage());
+        // Initialize Text to Speech
+        tts = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                tts.setLanguage(Locale.US);
+            }
+        });
+    }
+
+    private void initModelAndRecognizer() {
+        new Thread(() -> {
+            try {
+                File modelPath = copyAssetsToStorage(this, "model");
+                model = new Model(modelPath.getAbsolutePath());
+                speechService = new SpeechService(model, 16000.0f);
+                speechService.startListening(this);
+                runOnUiThread(() -> speak("Voice recognition started"));
+            } catch (IOException e) {
+                Log.e(TAG, "Model init failed", e);
+            }
+        }).start();
+    }
+
+    private File copyAssetsToStorage(Context context, String folderName) throws IOException {
+        File outDir = new File(context.getExternalFilesDir(null), folderName);
+        if (!outDir.exists()) outDir.mkdirs();
+
+        AssetManager assetManager = context.getAssets();
+        String[] files = assetManager.list(folderName);
+        for (String filename : files) {
+            File outFile = new File(outDir, filename);
+            if (!outFile.exists()) {
+                try (InputStream in = assetManager.open(folderName + "/" + filename);
+                     OutputStream out = new FileOutputStream(outFile)) {
+                    byte[] buffer = new byte[1024];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
+                }
+            }
         }
+        return outDir;
     }
 
     @Override
     public void onResult(String hypothesis) {
-        txtResult.setText(hypothesis);
+        runOnUiThread(() -> {
+            resultTextView.setText(hypothesis);
+            processCommand(hypothesis);
+        });
     }
 
     @Override
-    public void onFinalResult(String command) {
-        txtResult.setText(command);
-        command = command.toLowerCase();
+    public void onPartialResult(String hypothesis) {
+        // Optional: can show live voice text
+    }
 
-        if (command.contains("call my father")) {
-            callNumber("1234567890"); // Replace this number
-        } else if (command.contains("otg on")) {
-            toggleOTG();
-        } else if (command.contains("open youtube")) {
-            openApp("com.google.android.youtube");
+    @Override
+    public void onError(Exception e) {
+        Log.e(TAG, "SpeechService error: ", e);
+        runOnUiThread(() -> Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
+    }
+
+    @Override
+    public void onTimeout() {
+        runOnUiThread(() -> speak("Timeout"));
+    }
+
+    private void speak(String text) {
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+    }
+
+    private void processCommand(String text) {
+        String cmd = text.toLowerCase();
+
+        if (cmd.contains("otg on")) {
+            speak("Opening OTG settings");
+            Intent intent = new Intent(Settings.ACTION_SETTINGS);
+            startActivity(intent);
+        } else if (cmd.contains("call my father") || cmd.contains("call father")) {
+            speak("Calling father");
+            Intent intent = new Intent(Intent.ACTION_CALL);
+            intent.setData(Uri.parse("tel:1234567890")); // Replace with real number
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
+                startActivity(intent);
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, 2);
+            }
+        } else {
+            speak("Command not recognized");
         }
     }
 
-    private void callNumber(String number) {
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + number));
-        startActivity(intent);
-    }
-
-    private void openApp(String packageName) {
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
-        if (launchIntent != null) {
-            startActivity(launchIntent);
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (speechService != null) {
+            speechService.stop();
+            speechService.shutdown();
+        }
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
         }
     }
 
-    private void toggleOTG() {
-        txtResult.setText("OTG toggle command received.");
-        // TO DO: Add real OTG toggle logic here (Shizuku/root/intent if possible)
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                initModelAndRecognizer();
+            } else {
+                Toast.makeText(this, "Permission denied to record audio", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
-
-    @Override public void onPartialResult(String hypothesis) {}
-    @Override public void onError(Exception e) {
-        txtResult.setText("Error: " + e.getMessage());
-    }
-    @Override public void onTimeout() {}
 }
