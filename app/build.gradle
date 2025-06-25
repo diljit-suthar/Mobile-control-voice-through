@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.master'
+    namespace 'com.master.app'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.master"
+        applicationId "com.master.app"
         minSdk 21
         targetSdk 33
         versionCode 1
@@ -36,7 +36,7 @@ android {
 repositories {
     google()
     mavenCentral()
-    jcenter() // optional, but good for older libraries
+    jcenter() // optional
 }
 
 dependencies {
