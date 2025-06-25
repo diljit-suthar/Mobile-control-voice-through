@@ -1,19 +1,10 @@
-// Top-level build.gradle
+// Project-level build.gradle (can be empty or minimal)
 buildscript {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }
     }
     dependencies {
-        // Add plugin dependencies here if any
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://jitpack.io' }
+        classpath 'com.android.tools.build:gradle:7.4.2'
     }
 }
