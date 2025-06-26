@@ -11,8 +11,8 @@ import androidx.core.content.ContextCompat;
 
 import org.vosk.Model;
 import org.vosk.Recognizer;
-import org.vosk.android.SpeechService;
 import org.vosk.android.RecognitionListener;
+import org.vosk.android.SpeechService;
 
 import java.io.IOException;
 
@@ -30,8 +30,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         setContentView(R.layout.activity_main);
 
         resultTextView = findViewById(R.id.result_text_view);
+        resultTextView.setText("App started...");
 
-        // Request microphone permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -56,10 +56,12 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private void initModel() {
         new Thread(() -> {
             try {
-                model = new Model("model"); // Make sure model folder is inside assets/model
+                // Load model from assets/model folder
+                model = new Model(getAssets(), "model");
                 Recognizer recognizer = new Recognizer(model, 16000.0f);
                 speechService = new SpeechService(recognizer, 16000.0f);
                 speechService.startListening(this);
+                runOnUiThread(() -> resultTextView.setText("Model loaded, listening..."));
             } catch (IOException e) {
                 runOnUiThread(() -> resultTextView.setText("Model error: " + e.getMessage()));
                 e.printStackTrace();
@@ -98,9 +100,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private void processCommand(String command) {
         command = command.toLowerCase();
         if (command.contains("otg on")) {
+            resultTextView.setText("OTG command detected!");
             // TODO: Implement OTG enabling logic
         } else if (command.contains("call my father")) {
+            resultTextView.setText("Call father command detected!");
             // TODO: Implement call logic
+        } else {
+            resultTextView.setText("Unknown command: " + command);
         }
     }
 
