@@ -1,106 +1,120 @@
 package com.master.voice;
 
-import android.Manifest; import android.content.pm.PackageManager; import android.os.Bundle; import android.util.Log; import android.widget.Toast; import androidx.annotation.NonNull; import androidx.appcompat.app.AppCompatActivity; import androidx.core.app.ActivityCompat; import androidx.core.content.ContextCompat; import org.vosk.Model; import org.vosk.Recognizer; import org.vosk.android.RecognitionListener; import org.vosk.android.SpeechService; import java.io.IOException;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.speech.RecognizerIntent;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
-public class MainActivity extends AppCompatActivity implements RecognitionListener {
+import com.vosk.Model;
+import com.vosk.Recognizer;
+import com.vosk.Vosk;
 
-private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
-private static final String TAG = "MainActivity";
-private Model model;
-private SpeechService speechService;
-private boolean isModelReady = false;
+import java.io.IOException;
+import java.util.ArrayList;
 
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
-    Toast.makeText(this, "App Started", Toast.LENGTH_SHORT).show();
+public class MainActivity extends AppCompatActivity {
 
-    int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
-    if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
-        return;
-    }
+    private static final int REQUEST_CODE_PERMISSION = 1;
+    private Recognizer recognizer;
+    private Model model;
 
-    initializeModel();
-}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-private void initializeModel() {
-    Toast.makeText(this, "Initializing Model...", Toast.LENGTH_SHORT).show();
-    new Thread(() -> {
-        try {
-            model = new Model("model");
-            isModelReady = true;
-            runOnUiThread(() -> {
-                Toast.makeText(this, "Model loaded successfully", Toast.LENGTH_SHORT).show();
-                startListening();
-            });
-        } catch (IOException e) {
-            Log.e(TAG, "Model loading failed", e);
-            runOnUiThread(() -> Toast.makeText(this, "Model failed, basic UI started", Toast.LENGTH_LONG).show());
-        }
-    }).start();
-}
+        // Initialize Vosk API
+        initVosk();
 
-private void startListening() {
-    try {
-        Recognizer recognizer = new Recognizer(model, 16000.0f);
-        speechService = new SpeechService(recognizer, 16000.0f);
-        speechService.startListening(this);
-        Toast.makeText(this, "Listening...", Toast.LENGTH_SHORT).show();
-    } catch (IOException e) {
-        Log.e(TAG, "SpeechService failed", e);
-        Toast.makeText(this, "Speech service failed", Toast.LENGTH_LONG).show();
-    }
-}
-
-@Override
-public void onPartialResult(String hypothesis) {
-    Log.d(TAG, "Partial: " + hypothesis);
-}
-
-@Override
-public void onResult(String hypothesis) {
-    Log.d(TAG, "Result: " + hypothesis);
-    Toast.makeText(this, "Command: " + hypothesis, Toast.LENGTH_SHORT).show();
-}
-
-@Override
-public void onFinalResult(String hypothesis) {
-    Log.d(TAG, "Final Result: " + hypothesis);
-}
-
-@Override
-public void onError(Exception e) {
-    Log.e(TAG, "Error: ", e);
-    Toast.makeText(this, "Recognition Error", Toast.LENGTH_SHORT).show();
-}
-
-@Override
-public void onTimeout() {
-    Toast.makeText(this, "Listening Timeout", Toast.LENGTH_SHORT).show();
-}
-
-@Override
-protected void onDestroy() {
-    super.onDestroy();
-    if (speechService != null) {
-        speechService.stop();
-        speechService.shutdown();
-    }
-}
-
-@Override
-public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-    if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            initializeModel();
+        // Check for microphone permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE_PERMISSION);
         } else {
-            Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
-            finish();
+            startListening();
+        }
+    }
+
+    private void initVosk() {
+        try {
+            // Initialize Vosk and the model
+            Vosk.setLogLevel(0); // Disable unnecessary logs
+            model = new Model(getAssets().open("vosk-model-small-en-us-0.15"));
+            recognizer = new Recognizer(model, 16000.0f);
+            Toast.makeText(this, "Vosk model loaded successfully.", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error initializing Vosk: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void startListening() {
+        try {
+            // Start listening for voice input
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Please speak now...");
+
+            startActivityForResult(intent, 1001);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error starting listening: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
+            ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            String spokenText = result.get(0);
+
+            // Handle the recognized text
+            handleRecognizedText(spokenText);
+        }
+    }
+
+    private void handleRecognizedText(String spokenText) {
+        Toast.makeText(this, "You said: " + spokenText, Toast.LENGTH_SHORT).show();
+
+        // Example voice commands handling
+        if (spokenText.contains("OTG on")) {
+            // Trigger OTG on action
+            Toast.makeText(this, "Turning OTG on", Toast.LENGTH_SHORT).show();
+        } else if (spokenText.contains("call father")) {
+            // Trigger call action
+            Toast.makeText(this, "Calling Father...", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Command not recognized.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Release resources
+        if (recognizer != null) {
+            recognizer.close();
+        }
+        if (model != null) {
+            model.close();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_CODE_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startListening();
+            } else {
+                Toast.makeText(this, "Permission denied to record audio", Toast.LENGTH_LONG).show();
+            }
         }
     }
 }
-
-}
-
