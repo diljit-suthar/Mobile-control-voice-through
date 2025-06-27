@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.master.voice">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -25,25 +24,22 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MasterVoice">
 
-        <!-- Main Activity -->
-        <activity android:name=".MainActivity">
+        <!-- ✅ Fixed: Add android:exported="true" -->
+        <activity android:name=".MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Optional: Broadcast Receiver for SMS -->
         <receiver android:name=".SMSReceiver" android:exported="true">
             <intent-filter android:priority="1000">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
 
-        <!-- Optional: Service for background voice -->
-        <service android:name=".VoiceService"
+        <service
+            android:name=".VoiceService"
             android:enabled="true"
-            android:exported="false" />
-    </application>
-
-</manifest>
+            android:exported
