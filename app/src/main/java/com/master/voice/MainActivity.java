@@ -5,16 +5,17 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.Toast;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import org.vosk.Model;
 import org.vosk.Recognizer;
-import org.vosk.android.SpeechService;
 import org.vosk.android.RecognitionListener;
-import java.io.File;
+import org.vosk.android.SpeechService;
+
 import java.io.IOException;
-import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
 
@@ -24,16 +25,18 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private Model model;
 
     @Override
-    protected void onCreate(Bundle b) {
-        super.onCreate(b);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         resultView = findViewById(R.id.result_text_view);
         resultView.setText("Starting app...");
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.RECORD_AUDIO},
-                PERMISSIONS_REQUEST_RECORD_AUDIO);
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    PERMISSIONS_REQUEST_RECORD_AUDIO);
         } else {
             loadModelAndStart();
         }
@@ -43,16 +46,16 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         new Thread(() -> {
             try {
                 runOnUiThread(() -> resultView.setText("Loading model..."));
-                // Option A: unzip to internal memory
-                File modelDir = new File(getFilesDir(), "model");
-                if (!modelDir.exists()) {
-                    Utils.unpackZip(getAssets().open("model.zip"), modelDir);
-                }
-                model = new Model(modelDir.getAbsolutePath());
+
+                // Load model directly from assets/model directory
+                model = new Model(getAssets(), "model");
+
                 Recognizer rec = new Recognizer(model, 16000.0f);
                 speechService = new SpeechService(rec, 16000.0f);
                 speechService.startListening(this);
+
                 runOnUiThread(() -> resultView.setText("Model loaded, listening..."));
+
             } catch (IOException e) {
                 runOnUiThread(() -> {
                     resultView.setText("Model load error: " + e.getMessage());
@@ -63,23 +66,43 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     @Override
-    public void onRequestPermissionsResult(int rc, String[] perms, int[] grants) {
-        super.onRequestPermissionsResult(rc, perms, grants);
-        if (rc == PERMISSIONS_REQUEST_RECORD_AUDIO &&
-            grants.length > 0 && grants[0] == PackageManager.PERMISSION_GRANTED) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO &&
+                grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             loadModelAndStart();
         } else {
             resultView.setText("Permission denied");
         }
     }
 
-    @Override public void onPartialResult(String hyp) { runOnUiThread(() -> resultView.setText("Partial: " + hyp)); }
-    @Override public void onResult(String hyp)        { runOnUiThread(() -> resultView.setText("Result: " + hyp)); }
-    @Override public void onFinalResult(String hyp)   { runOnUiThread(() -> resultView.setText("Final: " + hyp)); }
-    @Override public void onError(Exception e)        { runOnUiThread(() -> resultView.setText("Error: " + e.getMessage())); }
-    @Override public void onTimeout()                 { runOnUiThread(() -> resultView.setText("Listening timed out")); }
+    @Override
+    public void onPartialResult(String hypothesis) {
+        runOnUiThread(() -> resultView.setText("Partial: " + hypothesis));
+    }
 
-    @Override protected void onDestroy() {
+    @Override
+    public void onResult(String hypothesis) {
+        runOnUiThread(() -> resultView.setText("Result: " + hypothesis));
+    }
+
+    @Override
+    public void onFinalResult(String hypothesis) {
+        runOnUiThread(() -> resultView.setText("Final: " + hypothesis));
+    }
+
+    @Override
+    public void onError(Exception e) {
+        runOnUiThread(() -> resultView.setText("Error: " + e.getMessage()));
+    }
+
+    @Override
+    public void onTimeout() {
+        runOnUiThread(() -> resultView.setText("Listening timed out"));
+    }
+
+    @Override
+    protected void onDestroy() {
         super.onDestroy();
         if (speechService != null) {
             speechService.stop();
