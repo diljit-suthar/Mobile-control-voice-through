@@ -1,3 +1,33 @@
+Skip to content
+Navigation Menu
+diljit-suthar
+Mobile-control-voice-through
+
+Code
+Issues
+1
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+Settings
+Mobile-control-voice-through/app/src/main/java/com/master/voice
+/MainActivity.java
+Go to file
+t
+diljit-suthar
+diljit-suthar
+Update MainActivity.java
+244028f
+ · 
+6 hours ago
+140 lines (119 loc) · 4.66 KB
+
+Code
+
+Blame
 package com.master.voice;
 
 import android.Manifest;
@@ -138,3 +168,4 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         super.onDestroy();
     }
 }
+Mobile-control-voice-through/app/src/main/java/com/master/voice/MainActivity.java at main · diljit-suthar/Mobile-control-voice-through
