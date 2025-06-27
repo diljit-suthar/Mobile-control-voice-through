@@ -2,11 +2,13 @@ package com.master.voice;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -17,13 +19,11 @@ import org.vosk.android.RecognitionListener;
 import org.vosk.android.SpeechService;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
 
-    private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
+    private static final int PERMISSIONS_REQUEST_CODE = 100;
     private TextView resultView;
     private SpeechService speechService;
     private Model model;
@@ -33,73 +33,58 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         resultView = findViewById(R.id.result_text_view);
-        resultView.setText("Starting...");
+        resultView.setText("Initializing...");
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.RECORD_AUDIO},
-                    PERMISSIONS_REQUEST_RECORD_AUDIO);
+        if (!hasPermissions()) {
+            requestPermissions();
         } else {
-            extractAndLoadModel();
+            loadModelFromStorage();
         }
     }
 
-    private void extractAndLoadModel() {
+    private boolean hasPermissions() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{
+                        Manifest.permission.RECORD_AUDIO,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                },
+                PERMISSIONS_REQUEST_CODE);
+    }
+
+    private void loadModelFromStorage() {
         new Thread(() -> {
             try {
-                runOnUiThread(() -> resultView.setText("Extracting model..."));
-                File modelDir = new File(getFilesDir(), "model");
-                if (!modelDir.exists()) {
-                    copyAssets("model", modelDir);
-                }
+                runOnUiThread(() -> resultView.setText("Loading model from storage..."));
+                File modelPath = new File(Environment.getExternalStorageDirectory(), "MasterVoiceModel/model");
+                model = new Model(modelPath.getAbsolutePath());
 
-                runOnUiThread(() -> resultView.setText("Loading model..."));
-                model = new Model(modelDir.getAbsolutePath());
-
-                Recognizer rec = new Recognizer(model, 16000.0f);
-                speechService = new SpeechService(rec, 16000.0f);
+                Recognizer recognizer = new Recognizer(model, 16000.0f);
+                speechService = new SpeechService(recognizer, 16000.0f);
                 speechService.startListening(this);
 
-                runOnUiThread(() -> resultView.setText("Model loaded, listening..."));
-
+                runOnUiThread(() -> resultView.setText("Listening started"));
             } catch (IOException e) {
                 runOnUiThread(() -> {
-                    resultView.setText("Model error: " + e.getMessage());
-                    Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    resultView.setText("Model load error: " + e.getMessage());
+                    Toast.makeText(this, "Model load failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         }).start();
     }
 
-    private void copyAssets(String assetPath, File outDir) throws IOException {
-        String[] assets = getAssets().list(assetPath);
-        if (assets == null || assets.length == 0) {
-            try (InputStream in = getAssets().open(assetPath)) {
-                File outFile = new File(outDir.getParentFile(), assetPath);
-                try (FileOutputStream out = new FileOutputStream(outFile)) {
-                    byte[] buffer = new byte[1024];
-                    int read;
-                    while ((read = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, read);
-                    }
-                }
-            }
-        } else {
-            if (!outDir.exists()) outDir.mkdirs();
-            for (String file : assets) {
-                copyAssets(assetPath + "/" + file, new File(outDir, file));
-            }
-        }
-    }
-
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO &&
-                grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            extractAndLoadModel();
-        } else {
-            resultView.setText("Permission denied");
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST_CODE) {
+            if (hasPermissions()) {
+                loadModelFromStorage();
+            } else {
+                resultView.setText("Permissions denied");
+            }
         }
     }
 
