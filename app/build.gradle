@@ -1,63 +1,25 @@
-plugins {
-    id 'com.android.application'
-}
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.master.voice">
 
-android {
-    namespace 'com.master.voice'
-    compileSdk 34
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-    defaultConfig {
-        applicationId "com.master.voice"
-        minSdk 23
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Master Voice"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        viewBinding true
-    }
-
-    aaptOptions {
-        noCompress "model" // Prevent model files from being compressed
-    }
-
-    sourceSets {
-        main {
-            assets.srcDirs = ['src/main/assets']
-        }
-    }
-}
-
-dependencies {
-    // AndroidX and Material Design
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-
-    // Vosk Speech Recognition
-    implementation 'com.alphacephei:vosk-android:0.3.32'
-
-    // Lifecycle / permission helpers
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
-
-    // Testing
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-}
+    </application>
+</manifest>
