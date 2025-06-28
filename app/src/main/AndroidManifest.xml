@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.master.voice">
 
+    <!-- Required Permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -9,14 +10,16 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
         android:theme="@style/Theme.Master">
 
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -26,6 +29,7 @@
             </intent-filter>
         </activity>
 
+        <!-- SMS Command Receiver -->
         <service
             android:name=".SMSCommandReceiver"
             android:exported="true"
