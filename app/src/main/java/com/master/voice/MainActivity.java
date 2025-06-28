@@ -34,32 +34,32 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         setContentView(R.layout.activity_main);
 
         resultText = findViewById(R.id.result_text_view);
-        resultText.setText("Waiting for permission...");
+        resultText.setText("Checking permissions...");
 
         checkAndRequestPermissions();
     }
 
     private void checkAndRequestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!checkPermissions()) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{
-                                Manifest.permission.RECORD_AUDIO,
-                                Manifest.permission.READ_EXTERNAL_STORAGE
-                        }, PERMISSION_CODE);
-            } else {
-                initModel();
-            }
+        if (!hasPermissions()) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{
+                            Manifest.permission.RECORD_AUDIO,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.CALL_PHONE,
+                            Manifest.permission.SEND_SMS,
+                            Manifest.permission.RECEIVE_SMS
+                    }, PERMISSION_CODE);
         } else {
             initModel();
         }
     }
 
-    private boolean checkPermissions() {
-        int audioPerm = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);
-        int storagePerm = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        return audioPerm == PackageManager.PERMISSION_GRANTED &&
-               storagePerm == PackageManager.PERMISSION_GRANTED;
+    private boolean hasPermissions() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void initModel() {
@@ -67,9 +67,16 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
         new Thread(() -> {
             try {
-                File modelPath = new File(Environment.getExternalStorageDirectory(), "Master Voice Model/model");
+                File modelPath;
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    modelPath = new File(getExternalFilesDir(null), "Master Voice Model/model");
+                } else {
+                    modelPath = new File(Environment.getExternalStorageDirectory(), "Master Voice Model/model");
+                }
+
                 if (!modelPath.exists()) {
-                    runOnUiThread(() -> resultText.setText("Model not found in storage."));
+                    runOnUiThread(() -> resultText.setText("Model not found at:\n" + modelPath.getAbsolutePath()));
                     return;
                 }
 
