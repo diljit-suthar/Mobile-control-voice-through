@@ -23,8 +23,8 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
 
-    private static final int PERMISSIONS_REQUEST_CODE = 100;
-    private TextView resultView;
+    private static final int PERMISSION_CODE = 1001;
+    private TextView resultText;
     private SpeechService speechService;
     private Model model;
 
@@ -32,19 +32,18 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        resultView = findViewById(R.id.result_text_view);
-        resultView.setText("Initializing...");
+        resultText = findViewById(R.id.result_text);
 
-        if (!hasPermissions()) {
-            requestPermissions();
+        if (checkPermissions()) {
+            initModel();
         } else {
-            loadModelFromStorage();
+            requestPermissions();
         }
     }
 
-    private boolean hasPermissions() {
+    private boolean checkPermissions() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+               ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestPermissions() {
@@ -53,25 +52,23 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                         Manifest.permission.RECORD_AUDIO,
                         Manifest.permission.READ_EXTERNAL_STORAGE
                 },
-                PERMISSIONS_REQUEST_CODE);
+                PERMISSION_CODE);
     }
 
-    private void loadModelFromStorage() {
+    private void initModel() {
         new Thread(() -> {
             try {
-                runOnUiThread(() -> resultView.setText("Loading model from storage..."));
-                File modelPath = new File(Environment.getExternalStorageDirectory(), "MasterVoiceModel/model");
+                File modelPath = new File(Environment.getExternalStorageDirectory(), "Master Voice Model/model");
                 model = new Model(modelPath.getAbsolutePath());
-
                 Recognizer recognizer = new Recognizer(model, 16000.0f);
                 speechService = new SpeechService(recognizer, 16000.0f);
-                speechService.startListening(this);
+                speechService.startListening(MainActivity.this);
 
-                runOnUiThread(() -> resultView.setText("Listening started"));
+                runOnUiThread(() -> resultText.setText("Listening..."));
             } catch (IOException e) {
                 runOnUiThread(() -> {
-                    resultView.setText("Model load error: " + e.getMessage());
-                    Toast.makeText(this, "Model load failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    resultText.setText("Model error: " + e.getMessage());
+                    Toast.makeText(this, "Model load failed", Toast.LENGTH_LONG).show();
                 });
             }
         }).start();
@@ -79,38 +76,31 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == PERMISSIONS_REQUEST_CODE) {
-            if (hasPermissions()) {
-                loadModelFromStorage();
-            } else {
-                resultView.setText("Permissions denied");
-            }
+        if (requestCode == PERMISSION_CODE && checkPermissions()) {
+            initModel();
+        } else {
+            resultText.setText("Permission Denied");
         }
     }
 
-    @Override
-    public void onPartialResult(String hypothesis) {
-        runOnUiThread(() -> resultView.setText("Partial: " + hypothesis));
+    @Override public void onPartialResult(String hypothesis) {
+        runOnUiThread(() -> resultText.setText("Partial: " + hypothesis));
     }
 
-    @Override
-    public void onResult(String hypothesis) {
-        runOnUiThread(() -> resultView.setText("Result: " + hypothesis));
+    @Override public void onResult(String hypothesis) {
+        runOnUiThread(() -> resultText.setText("Result: " + hypothesis));
     }
 
-    @Override
-    public void onFinalResult(String hypothesis) {
-        runOnUiThread(() -> resultView.setText("Final: " + hypothesis));
+    @Override public void onFinalResult(String hypothesis) {
+        runOnUiThread(() -> resultText.setText("Final: " + hypothesis));
     }
 
-    @Override
-    public void onError(Exception e) {
-        runOnUiThread(() -> resultView.setText("Error: " + e.getMessage()));
+    @Override public void onError(Exception e) {
+        runOnUiThread(() -> resultText.setText("Error: " + e.getMessage()));
     }
 
-    @Override
-    public void onTimeout() {
-        runOnUiThread(() -> resultView.setText("Listening timeout"));
+    @Override public void onTimeout() {
+        runOnUiThread(() -> resultText.setText("Timeout"));
     }
 
     @Override
