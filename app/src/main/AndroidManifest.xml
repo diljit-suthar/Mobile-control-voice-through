@@ -10,9 +10,6 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
 
     <application
         android:allowBackup="true"
@@ -34,7 +31,6 @@
             android:name=".SMSCommandReceiver"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-
     </application>
 
 </manifest>
