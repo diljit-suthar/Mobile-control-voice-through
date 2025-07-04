@@ -41,7 +41,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             ActivityCompat.requestPermissions(this,
                     new String[]{
                             Manifest.permission.RECORD_AUDIO,
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
                             Manifest.permission.CALL_PHONE,
                             Manifest.permission.SEND_SMS,
                             Manifest.permission.RECEIVE_SMS
@@ -53,7 +52,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private boolean hasPermissions() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
-               ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED &&
                ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED &&
                ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED;
