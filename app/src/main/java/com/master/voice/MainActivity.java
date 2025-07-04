@@ -2,9 +2,7 @@ package com.master.voice;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,7 +16,6 @@ import org.vosk.Recognizer;
 import org.vosk.android.RecognitionListener;
 import org.vosk.android.SpeechService;
 
-import java.io.File;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
@@ -56,31 +53,18 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private boolean hasPermissions() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED;
+               ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+               ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED &&
+               ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED &&
+               ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void initModel() {
-        resultText.setText("Loading model...");
+        resultText.setText("Loading model from assets...");
 
         new Thread(() -> {
             try {
-                File modelPath;
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    modelPath = new File(getExternalFilesDir(null), "Master Voice Model/model");
-                } else {
-                    modelPath = new File(Environment.getExternalStorageDirectory(), "Master Voice Model/model");
-                }
-
-                if (!modelPath.exists()) {
-                    runOnUiThread(() -> resultText.setText("Model not found at:\n" + modelPath.getAbsolutePath()));
-                    return;
-                }
-
-                model = new Model(modelPath.getAbsolutePath());
+                model = new Model(getAssets(), "model");
                 Recognizer recognizer = new Recognizer(model, 16000.0f);
                 speechService = new SpeechService(recognizer, 16000.0f);
                 speechService.startListening(this);
