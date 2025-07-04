@@ -16,6 +16,7 @@ import org.vosk.Recognizer;
 import org.vosk.android.RecognitionListener;
 import org.vosk.android.SpeechService;
 
+import java.io.File;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
@@ -29,10 +30,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         resultText = findViewById(R.id.result_text_view);
         resultText.setText("Checking permissions...");
-
         checkAndRequestPermissions();
     }
 
@@ -58,11 +57,15 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     private void initModel() {
-        resultText.setText("Loading model from assets...");
-
+        resultText.setText("Loading model...");
         new Thread(() -> {
             try {
-                model = new Model(getAssets(), "model");
+                File modelDir = new File(getFilesDir(), "model");
+                if (!modelDir.exists()) {
+                    Assets.copyAssetDirToInternalStorage(this, "model", "model");
+                }
+
+                model = new Model(modelDir.getAbsolutePath());
                 Recognizer recognizer = new Recognizer(model, 16000.0f);
                 speechService = new SpeechService(recognizer, 16000.0f);
                 speechService.startListening(this);
@@ -78,8 +81,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == PERMISSION_CODE) {
