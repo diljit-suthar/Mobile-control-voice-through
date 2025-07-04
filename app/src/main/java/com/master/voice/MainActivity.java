@@ -42,7 +42,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                             Manifest.permission.RECORD_AUDIO,
                             Manifest.permission.CALL_PHONE,
                             Manifest.permission.SEND_SMS,
-                            Manifest.permission.RECEIVE_SMS
+                            Manifest.permission.RECEIVE_SMS,
+                            Manifest.permission.READ_EXTERNAL_STORAGE
                     }, PERMISSION_CODE);
         } else {
             initModel();
@@ -51,18 +52,24 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private boolean hasPermissions() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
-               ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED &&
-               ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED &&
-               ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED;
+                ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void initModel() {
         resultText.setText("Loading model...");
+
         new Thread(() -> {
             try {
-                File modelDir = new File(getFilesDir(), "model");
-                if (!modelDir.exists()) {
-                    Assets.copyAssetDirToInternalStorage(this, "model", "model");
+                File modelDir = new File("/storage/emulated/0/model");
+
+                if (!modelDir.exists() || !modelDir.isDirectory()) {
+                    modelDir = new File(getFilesDir(), "model");
+                    if (!modelDir.exists()) {
+                        Assets.copyAssetDirToInternalStorage(this, "model", "model");
+                    }
                 }
 
                 model = new Model(modelDir.getAbsolutePath());
