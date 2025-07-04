@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.master.voice">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Required Permissions -->
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -26,11 +25,14 @@
             </intent-filter>
         </activity>
 
-        <!-- SMS Command Receiver -->
-        <service
+        <!-- SMS Receiver (adjust if service) -->
+        <receiver
             android:name=".SMSCommandReceiver"
-            android:exported="true"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
-    </application>
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
 
+    </application>
 </manifest>
