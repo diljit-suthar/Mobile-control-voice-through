@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
             intent.setData(Uri.parse("package:" + getPackageName()));
-            startActivity(intent);
+            startActivityForResult(intent, PERMISSION_CODE);
         } else {
             initModel();
         }
@@ -84,7 +84,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     @Override
     protected void onResume() {
         super.onResume();
-        // Check if we now have All Files Access after returning from settings
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (Environment.isExternalStorageManager()) {
                 initModel();
@@ -115,7 +114,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 speechService.startListening(this);
 
                 runOnUiThread(() -> resultText.setText("Listening started..."));
-
             } catch (IOException e) {
                 runOnUiThread(() -> {
                     resultText.setText("Model load error: " + e.getMessage());
