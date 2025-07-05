@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         resultText = findViewById(R.id.result_text_view);
         resultText.setText("Checking permissions...");
         checkAndRequestPermissions();
@@ -77,6 +78,19 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             startActivity(intent);
         } else {
             initModel();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Check if we now have All Files Access after returning from settings
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) {
+                initModel();
+            } else {
+                resultText.setText("Waiting for All Files Access...");
+            }
         }
     }
 
@@ -130,23 +144,28 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
-    @Override public void onPartialResult(String hypothesis) {
+    @Override
+    public void onPartialResult(String hypothesis) {
         runOnUiThread(() -> resultText.setText("Partial: " + hypothesis));
     }
 
-    @Override public void onResult(String hypothesis) {
+    @Override
+    public void onResult(String hypothesis) {
         runOnUiThread(() -> resultText.setText("Result: " + hypothesis));
     }
 
-    @Override public void onFinalResult(String hypothesis) {
+    @Override
+    public void onFinalResult(String hypothesis) {
         runOnUiThread(() -> resultText.setText("Final: " + hypothesis));
     }
 
-    @Override public void onError(Exception e) {
+    @Override
+    public void onError(Exception e) {
         runOnUiThread(() -> resultText.setText("Error: " + e.getMessage()));
     }
 
-    @Override public void onTimeout() {
+    @Override
+    public void onTimeout() {
         runOnUiThread(() -> resultText.setText("Timeout: No speech detected"));
     }
 
