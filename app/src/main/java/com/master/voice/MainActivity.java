@@ -23,6 +23,8 @@ import org.vosk.android.SpeechService;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
 
@@ -36,24 +38,40 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         resultText = findViewById(R.id.result_text_view);
-
         resultText.setText("Checking permissions...");
         checkAndRequestPermissions();
     }
 
     private void checkAndRequestPermissions() {
-        if (!hasAllPermissions()) {
+        List<String> permissionsList = new ArrayList<>();
+        permissionsList.add(Manifest.permission.RECORD_AUDIO);
+        permissionsList.add(Manifest.permission.RECEIVE_SMS);
+        permissionsList.add(Manifest.permission.READ_SMS);
+        permissionsList.add(Manifest.permission.SEND_SMS);
+        permissionsList.add(Manifest.permission.CALL_PHONE);
+        permissionsList.add(Manifest.permission.READ_PHONE_STATE);
+
+        // Android 13+ media permissions
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionsList.add(Manifest.permission.READ_MEDIA_AUDIO);
+            permissionsList.add(Manifest.permission.READ_MEDIA_IMAGES);
+            permissionsList.add(Manifest.permission.READ_MEDIA_VIDEO);
+        } else {
+            permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+
+        boolean allGranted = true;
+        for (String permission : permissionsList) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                allGranted = false;
+                break;
+            }
+        }
+
+        if (!allGranted) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.RECORD_AUDIO,
-                            Manifest.permission.READ_SMS,
-                            Manifest.permission.SEND_SMS,
-                            Manifest.permission.RECEIVE_SMS,
-                            Manifest.permission.CALL_PHONE,
-                            Manifest.permission.READ_PHONE_STATE,
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    }, PERMISSION_CODE);
+                    permissionsList.toArray(new String[0]), PERMISSION_CODE);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
             intent.setData(Uri.parse("package:" + getPackageName()));
@@ -61,15 +79,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         } else {
             initModel();
         }
-    }
-
-    private boolean hasAllPermissions() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void initModel() {
@@ -114,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 }
             }
             if (granted) {
-                checkAndRequestPermissions(); // Re-check special permission if Android 11+
+                checkAndRequestPermissions(); // Re-check for MANAGE_EXTERNAL_STORAGE if needed
             } else {
                 resultText.setText("Permission Denied");
                 Toast.makeText(this, "Permissions are required", Toast.LENGTH_LONG).show();
