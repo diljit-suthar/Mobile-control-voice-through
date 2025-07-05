@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         permissionsList.add(Manifest.permission.CALL_PHONE);
         permissionsList.add(Manifest.permission.READ_PHONE_STATE);
 
-        // Android 13+ media permissions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissionsList.add(Manifest.permission.READ_MEDIA_AUDIO);
             permissionsList.add(Manifest.permission.READ_MEDIA_IMAGES);
@@ -83,7 +82,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private void initModel() {
         resultText.setText("Loading model...");
-
         new Thread(() -> {
             try {
                 File externalModelDir = new File(Environment.getExternalStorageDirectory(), "model");
@@ -103,10 +101,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 speechService.startListening(this);
 
                 runOnUiThread(() -> resultText.setText("Listening started..."));
+
             } catch (IOException e) {
                 runOnUiThread(() -> {
                     resultText.setText("Model load error: " + e.getMessage());
-                    Toast.makeText(this, "Failed to load model", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Model loading failed", Toast.LENGTH_LONG).show();
                 });
             }
         }).start();
@@ -115,18 +114,18 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_CODE) {
-            boolean granted = true;
+            boolean allGranted = true;
             for (int result : grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
-                    granted = false;
+                    allGranted = false;
                     break;
                 }
             }
-            if (granted) {
-                checkAndRequestPermissions(); // Re-check for MANAGE_EXTERNAL_STORAGE if needed
+            if (allGranted) {
+                checkAndRequestPermissions();
             } else {
                 resultText.setText("Permission Denied");
-                Toast.makeText(this, "Permissions are required", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Permissions required to continue", Toast.LENGTH_LONG).show();
             }
         }
     }
